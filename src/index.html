@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Member Directory</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f4;
+      --panel: #ffffff;
+      --ink: #1b1f23;
+      --muted: #667085;
+      --line: #dde2dc;
+      --accent: #1f7a68;
+      --accent-dark: #155e50;
+      --gold: #b7791f;
+      --blue: #3563a6;
+      --danger: #a64034;
+      --shadow: 0 16px 40px rgba(31, 42, 55, 0.08);
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+    button, input, select, textarea { font: inherit; letter-spacing: 0; }
+    button {
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    button:disabled { cursor: not-allowed; opacity: 0.58; }
+    .shell {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.7rem, 3vw, 2.6rem);
+      line-height: 1.04;
+    }
+    .lede {
+      margin: 0;
+      color: var(--muted);
+      max-width: 740px;
+      line-height: 1.45;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .primary {
+      background: var(--accent);
+      color: #fff;
+      padding: 11px 14px;
+    }
+    .primary:hover { background: var(--accent-dark); }
+    .ghost {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      padding: 10px 13px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 84px;
+    }
+    .stat strong {
+      display: block;
+      font-size: 1.55rem;
+      line-height: 1;
+      margin-bottom: 7px;
+    }
+    .stat span {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.25;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 170px 190px;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .field {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 8px;
+      min-height: 42px;
+      padding: 10px 12px;
+      outline: none;
+    }
+    .field:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(31, 122, 104, 0.14);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 16px;
+      align-items: start;
+    }
+    .directory {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .member-card {
+      text-align: left;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 184px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: none;
+    }
+    .member-card:hover, .member-card.active {
+      border-color: rgba(31, 122, 104, 0.7);
+      box-shadow: var(--shadow);
+    }
+    .card-head {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+    .avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 8px;
+      background: #d7ece5;
+      color: #17473f;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .name {
+      display: block;
+      color: var(--ink);
+      font-size: 1rem;
+      line-height: 1.18;
+      overflow-wrap: anywhere;
+    }
+    .meta {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.3;
+      margin-top: 4px;
+    }
+    .bio {
+      color: #384150;
+      font-size: 0.9rem;
+      line-height: 1.38;
+      margin: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .chips {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-top: auto;
+    }
+    .chip {
+      border-radius: 999px;
+      border: 1px solid #dbe4df;
+      background: #f8fbf9;
+      color: #3f4b47;
+      padding: 5px 8px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    .chip.active { color: #116149; background: #e4f5ee; border-color: #bfe4d4; }
+    .chip.alumni { color: var(--blue); background: #edf3ff; border-color: #cbd9f5; }
+    .chip.leader { color: var(--gold); background: #fff6df; border-color: #f0d391; }
+    .detail {
+      position: sticky;
+      top: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .detail-empty {
+      color: var(--muted);
+      line-height: 1.45;
+      margin: 0;
+    }
+    .detail-head {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .detail .avatar {
+      width: 76px;
+      height: 76px;
+      font-size: 1.5rem;
+    }
+    .detail h2 {
+      margin: 0;
+      font-size: 1.28rem;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+    .detail-section {
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      margin-top: 14px;
+    }
+    .detail-section h3 {
+      margin: 0 0 8px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .detail-section p {
+      margin: 0;
+      line-height: 1.45;
+      color: #344054;
+      overflow-wrap: anywhere;
+    }
+    .contact-list {
+      display: grid;
+      gap: 8px;
+    }
+    .contact-list a, .contact-list span {
+      color: #235c86;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      font-size: 0.92rem;
+    }
+    .notice {
+      margin-top: 12px;
+      border: 1px solid #f0d391;
+      background: #fff9e8;
+      color: #6b4b0b;
+      border-radius: 8px;
+      padding: 11px 12px;
+      font-size: 0.85rem;
+      line-height: 1.35;
+    }
+    .empty {
+      background: var(--panel);
+      border: 1px dashed #bcc7c0;
+      border-radius: 8px;
+      padding: 28px;
+      color: var(--muted);
+      text-align: center;
+      grid-column: 1 / -1;
+    }
+    dialog {
+      border: 0;
+      border-radius: 8px;
+      padding: 0;
+      width: min(620px, calc(100vw - 28px));
+      box-shadow: 0 28px 80px rgba(15, 23, 42, 0.24);
+    }
+    dialog::backdrop { background: rgba(15, 23, 42, 0.35); }
+    .modal {
+      padding: 20px;
+      background: #fff;
+    }
+    .modal h2 {
+      margin: 0 0 12px;
+      font-size: 1.25rem;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .form-grid label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .form-grid label.wide { grid-column: 1 / -1; }
+    textarea.field {
+      min-height: 92px;
+      resize: vertical;
+    }
+    .photo-field {
+      display: grid;
+      grid-template-columns: 82px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+    .photo-preview {
+      width: 82px;
+      height: 82px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #f3f6f4;
+      color: var(--muted);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      font-weight: 800;
+    }
+    .photo-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-controls {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+    .file-field {
+      display: block;
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 9px 10px;
+      color: var(--ink);
+      font-size: 0.88rem;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: #16231f;
+      color: white;
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 0.88rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+      max-width: min(560px, calc(100vw - 24px));
+      text-align: center;
+      z-index: 20;
+    }
+    .toast.show { opacity: 1; }
+    @media (max-width: 880px) {
+      .shell { padding: 18px 14px; }
+      .topbar, .layout { grid-template-columns: 1fr; }
+      .actions { justify-content: flex-start; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .toolbar { grid-template-columns: 1fr; }
+      .detail { position: static; }
+    }
+    @media (max-width: 520px) {
+      .stats { grid-template-columns: 1fr; }
+      .directory { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="topbar">
+      <div>
+        <h1>Member Directory</h1>
+        <p class="lede">Browse the internal roster, find contact details, and keep org-specific profile information separate from external address book contacts.</p>
+      </div>
+      <div class="actions">
+        <button class="ghost" id="refreshBtn" type="button">Refresh</button>
+        <button class="primary" id="addBtn" type="button">Add Person</button>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Directory summary">
+      <div class="stat"><strong id="totalStat">0</strong><span>Directory people</span></div>
+      <div class="stat"><strong id="activeStat">0</strong><span>Active roster</span></div>
+      <div class="stat"><strong id="alumniStat">0</strong><span>Alumni</span></div>
+      <div class="stat"><strong id="leaderStat">0</strong><span>Leadership/admin</span></div>
+    </section>
+
+    <section class="toolbar" aria-label="Directory filters">
+      <input class="field" id="searchInput" type="search" placeholder="Search by name, role, cohort, bio, or contact" />
+      <select class="field" id="statusFilter" aria-label="Filter by status">
+        <option value="all">All statuses</option>
+        <option value="active">Active</option>
+        <option value="alumni">Alumni</option>
+        <option value="inactive">Inactive</option>
+      </select>
+      <select class="field" id="cohortFilter" aria-label="Filter by cohort">
+        <option value="all">All cohorts</option>
+      </select>
+    </section>
+
+    <section class="layout">
+      <div class="directory" id="directory" aria-live="polite"></div>
+      <aside class="detail" id="detail" aria-live="polite"></aside>
+    </section>
+  </main>
+
+  <dialog id="profileDialog">
+    <form class="modal" id="profileForm" method="dialog">
+      <h2 id="dialogTitle">Member Profile</h2>
+      <div class="form-grid">
+        <label>Name<input class="field" name="name" required /></label>
+        <label>Directory Type
+          <select class="field" name="kind">
+            <option value="other">Other</option>
+            <option value="alumni">Alumni</option>
+            <option value="advisor">Advisor</option>
+            <option value="partner">Partner</option>
+            <option value="guest">Guest</option>
+          </select>
+        </label>
+        <label>Status
+          <select class="field" name="status">
+            <option value="active">Active</option>
+            <option value="alumni">Alumni</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </label>
+        <label>Role<input class="field" name="orgRole" placeholder="Treasurer, New Member Educator" /></label>
+        <label>Cohort<input class="field" name="cohort" placeholder="Fall 2026" /></label>
+        <label>Email<input class="field" name="email" type="email" /></label>
+        <label>Phone<input class="field" name="phone" type="tel" /></label>
+        <label class="wide">Headshot
+          <span class="photo-field">
+            <span class="photo-preview" id="photoPreview">Photo</span>
+            <span class="photo-controls">
+              <input class="file-field" name="headshotFile" type="file" accept="image/*" />
+              <input class="field" name="photoUrl" type="url" placeholder="Optional image URL fallback" />
+            </span>
+          </span>
+        </label>
+        <label class="wide">Bio<textarea class="field" name="bio"></textarea></label>
+      </div>
+      <div class="notice" id="saveNotice"></div>
+      <div class="modal-actions">
+        <button class="ghost" id="closeDialogBtn" type="button">Close</button>
+        <button class="primary" id="saveBtn" value="default" type="submit">Save Profile</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script type="module">
+    import { createFilesHelper } from "/hub-sdk.js";
+
+    const CONTEXT = window.__CONTEXT_URL ?? "";
+    const DB = window.__DB_URL ?? "";
+    const FILES_URL = window.__FILES_URL ?? "";
+    const files = createFilesHelper(FILES_URL);
+    const ME = window.__CURRENT_MEMBER ?? null;
+
+    const state = {
+      hubMembers: [],
+      groups: [],
+      profiles: [],
+      people: [],
+      members: [],
+      leadershipGroupId: "",
+      selectedUid: null,
+      query: "",
+      status: "all",
+      cohort: "all",
+      canManage: false,
+      demo: false,
+    };
+
+    const demoMembers = [
+      {
+        id: "m1",
+        name: "Avery Brooks",
+        role: "adult",
+        isAdmin: true,
+      },
+      {
+        id: "m2",
+        name: "Mina Patel",
+        role: "adult",
+      },
+    ];
+
+    const demoProfiles = [
+      {
+        id: "p1",
+        linked_member_id: "m1",
+        orgRole: "President",
+        cohort: "Fall 2024",
+        status: "active",
+        email: "avery@example.org",
+        phone: "(555) 014-2026",
+        bio: "Coordinates chapter operations, meeting rhythms, and member support.",
+      },
+      {
+        id: "p2",
+        linked_member_id: "m2",
+        orgRole: "Risk Chair",
+        cohort: "Spring 2025",
+        status: "active",
+        email: "mina@example.org",
+        bio: "Keeps event plans, safety policies, and shift coverage easy to find.",
+      },
+    ];
+
+    const demoPeople = [
+      {
+        id: "person1",
+        name: "Jordan Lee",
+        kind: "alumni",
+        orgRole: "Alumni Advisor",
+        cohort: "Fall 2021",
+        status: "alumni",
+        email: "jordan@example.org",
+        bio: "Helps active members connect current projects to chapter history.",
+      },
+    ];
+
+    const els = {
+      directory: document.getElementById("directory"),
+      detail: document.getElementById("detail"),
+      totalStat: document.getElementById("totalStat"),
+      activeStat: document.getElementById("activeStat"),
+      alumniStat: document.getElementById("alumniStat"),
+      leaderStat: document.getElementById("leaderStat"),
+      search: document.getElementById("searchInput"),
+      status: document.getElementById("statusFilter"),
+      cohort: document.getElementById("cohortFilter"),
+      refresh: document.getElementById("refreshBtn"),
+      add: document.getElementById("addBtn"),
+      dialog: document.getElementById("profileDialog"),
+      form: document.getElementById("profileForm"),
+      dialogTitle: document.getElementById("dialogTitle"),
+      saveBtn: document.getElementById("saveBtn"),
+      saveNotice: document.getElementById("saveNotice"),
+      closeDialog: document.getElementById("closeDialogBtn"),
+      photoPreview: document.getElementById("photoPreview"),
+      toast: document.getElementById("toast"),
+    };
+
+    async function db(sql, params = []) {
+      if (!DB) return { rows: [] };
+      const res = await fetch(DB, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sql, params }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.error) throw new Error(json.error ?? `DB request failed: ${res.status}`);
+      return json;
+    }
+
+    function esc(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (ch) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[ch]);
+    }
+
+    function normalizeMember(member) {
+      const profile = member.profile ?? member.directory ?? {};
+      const contact = profile.contact ?? member.contact ?? {};
+      return {
+        ...member,
+        uid: member.uid ?? member.id,
+        name: member.name ?? "Unnamed member",
+        status: (profile.status ?? member.status ?? "active").toLowerCase(),
+        orgRole: profile.orgRole ?? profile.org_role ?? profile.title ?? member.orgRole ?? member.org_role ?? member.title ?? member.role ?? "",
+        cohort: profile.cohort ?? profile.pledgeClass ?? member.cohort ?? member.pledgeClass ?? "",
+        bio: profile.bio ?? member.bio ?? "",
+        photoUrl: profile.photoUrl ?? profile.photo_url ?? profile.avatarUrl ?? member.photoUrl ?? member.photo_url ?? member.avatarUrl ?? "",
+        email: contact.email ?? profile.email ?? member.email ?? "",
+        phone: contact.phone ?? profile.phone ?? member.phone ?? "",
+        kind: profile.kind ?? member.kind ?? "member",
+      };
+    }
+
+    function isLeader(member) {
+      const role = String(member?.role ?? "").toLowerCase();
+      const orgRole = String(member?.orgRole ?? "").toLowerCase();
+      return !!(member?.isAdmin || member?.admin || role === "admin" || role === "leadership" || orgRole.includes("president") || orgRole.includes("chair"));
+    }
+
+    function composeDirectory() {
+      const profileByMemberId = new Map(state.profiles.map((profile) => [profile.linked_member_id, profile]));
+      const hubRows = state.hubMembers.map((member) => {
+        const profile = profileByMemberId.get(member.id) ?? {};
+        return normalizeMember({
+          ...member,
+          ...profile,
+          id: member.id,
+          uid: `hub:${member.id}`,
+          source: "hub",
+          linkedMemberId: member.id,
+          name: member.name,
+          role: member.role,
+          isAdmin: member.isAdmin,
+        });
+      });
+      const appRows = state.people.map((person) => normalizeMember({
+        ...person,
+        uid: `person:${person.id}`,
+        source: "person",
+        personId: person.id,
+      }));
+      state.members = [...hubRows, ...appRows].sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    async function loadMembers() {
+      state.demo = !CONTEXT && !DB;
+      state.canManage = state.demo;
+
+      if (state.demo) {
+        state.hubMembers = demoMembers;
+        state.groups = [];
+        state.profiles = demoProfiles;
+        state.people = demoPeople;
+        state.leadershipGroupId = "";
+        composeDirectory();
+        state.selectedUid = state.members[0]?.uid ?? null;
+        render();
+        return;
+      }
+
+      try {
+        const [context, settings, profiles, people] = await Promise.all([
+          loadHubContext(),
+          loadDirectorySettings(),
+          db("SELECT * FROM app_member_directory__member_profiles ORDER BY updated_at DESC"),
+          db("SELECT * FROM app_member_directory__directory_people"),
+        ]);
+        state.hubMembers = context.members;
+        state.groups = context.groups;
+        state.leadershipGroupId = settings.leadershipGroupId;
+        state.canManage = memberInConfiguredLeadershipGroup();
+        state.profiles = profiles.rows ?? [];
+        state.people = people.rows ?? [];
+        composeDirectory();
+        if (!state.selectedUid || !state.members.some((m) => m.uid === state.selectedUid)) {
+          state.selectedUid = state.members[0]?.uid ?? null;
+        }
+        render();
+      } catch (err) {
+        state.members = [];
+        state.selectedUid = null;
+        render();
+        toast(`Could not load members: ${err.message}`);
+      }
+    }
+
+    async function loadHubContext() {
+      if (!CONTEXT) return { members: [], groups: [] };
+      const res = await fetch(`${CONTEXT}?keys=family.members,family.groups`);
+      if (!res.ok) throw new Error(`Context request failed: HTTP ${res.status}`);
+      const ctx = await res.json();
+      return {
+        members: ctx["family.members"] ?? [],
+        groups: ctx["family.groups"] ?? [],
+      };
+    }
+
+    async function loadDirectorySettings() {
+      if (!DB) return { leadershipGroupId: "" };
+      const result = await db(
+        "SELECT value FROM app_member_directory__md_settings WHERE key = ? LIMIT 1",
+        ["leadership_group_id"],
+      );
+      return { leadershipGroupId: result.rows?.[0]?.value ?? "" };
+    }
+
+    function memberInConfiguredLeadershipGroup() {
+      if (!ME?.id || !state.leadershipGroupId) return false;
+      const group = state.groups.find((candidate) => candidate.id === state.leadershipGroupId);
+      return !!group?.memberIds?.includes(ME.id);
+    }
+
+    function filteredMembers() {
+      const q = state.query.trim().toLowerCase();
+      return state.members.filter((member) => {
+        const statusOk = state.status === "all" || member.status === state.status;
+        const cohortOk = state.cohort === "all" || member.cohort === state.cohort;
+        const haystack = [member.name, member.orgRole, member.role, member.cohort, member.status, member.bio, member.email, member.phone].join(" ").toLowerCase();
+        return statusOk && cohortOk && (!q || haystack.includes(q));
+      });
+    }
+
+    function renderStats() {
+      els.totalStat.textContent = state.members.length;
+      els.activeStat.textContent = state.members.filter((m) => m.status === "active").length;
+      els.alumniStat.textContent = state.members.filter((m) => m.status === "alumni").length;
+      els.leaderStat.textContent = state.members.filter(isLeader).length;
+    }
+
+    function renderCohorts() {
+      const cohorts = [...new Set(state.members.map((m) => m.cohort).filter(Boolean))].sort();
+      const current = state.cohort;
+      els.cohort.innerHTML = `<option value="all">All cohorts</option>${cohorts.map((cohort) => `<option value="${esc(cohort)}">${esc(cohort)}</option>`).join("")}`;
+      els.cohort.value = cohorts.includes(current) ? current : "all";
+      state.cohort = els.cohort.value;
+    }
+
+    function avatar(member, large = false) {
+      if (member.photoUrl) {
+        return `<span class="avatar${large ? " large" : ""}"><img src="${esc(member.photoUrl)}" alt="" loading="lazy" /></span>`;
+      }
+      const initials = member.name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "?";
+      return `<span class="avatar${large ? " large" : ""}" aria-hidden="true">${esc(initials)}</span>`;
+    }
+
+    function renderDirectory() {
+      const members = filteredMembers();
+      if (members.length === 0) {
+        els.directory.innerHTML = `<div class="empty">No members match the current filters.</div>`;
+        return;
+      }
+
+      els.directory.innerHTML = members.map((member) => {
+        const active = member.uid === state.selectedUid ? " active" : "";
+        const statusClass = member.status === "alumni" ? "alumni" : "active";
+        const leaderChip = isLeader(member) ? `<span class="chip leader">Leadership</span>` : "";
+        const sourceChip = member.source === "hub" ? "Hub member" : labelForKind(member.kind);
+        return `
+          <button class="member-card${active}" type="button" data-uid="${esc(member.uid)}">
+            <span class="card-head">
+              ${avatar(member)}
+              <span>
+                <strong class="name">${esc(member.name)}</strong>
+                <span class="meta">${esc(member.orgRole || member.role || "Member")}</span>
+              </span>
+            </span>
+            <p class="bio">${esc(member.bio || "No bio added yet.")}</p>
+            <span class="chips">
+              <span class="chip ${statusClass}">${esc(labelForStatus(member.status))}</span>
+              <span class="chip">${esc(sourceChip)}</span>
+              ${member.cohort ? `<span class="chip">${esc(member.cohort)}</span>` : ""}
+              ${leaderChip}
+            </span>
+          </button>
+        `;
+      }).join("");
+
+      els.directory.querySelectorAll(".member-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          state.selectedUid = card.dataset.uid;
+          render();
+        });
+      });
+    }
+
+    function renderDetail() {
+      const member = state.members.find((m) => m.uid === state.selectedUid) ?? filteredMembers()[0];
+      if (!member) {
+        els.detail.innerHTML = `<p class="detail-empty">Select a member to view their profile.</p>`;
+        return;
+      }
+      state.selectedUid = member.uid;
+      const contactRows = [
+        member.email ? `<a href="mailto:${esc(member.email)}">${esc(member.email)}</a>` : "",
+        member.phone ? `<a href="tel:${esc(member.phone)}">${esc(member.phone)}</a>` : "",
+      ].filter(Boolean).join("");
+      const management = state.canManage
+        ? `<div class="detail-section"><button class="primary" id="editBtn" type="button">Edit Profile</button><div class="notice">Saves update app-owned directory data only. Hub member records are not modified.</div></div>`
+        : "";
+
+      els.detail.innerHTML = `
+        <div class="detail-head">
+          ${avatar(member, true)}
+          <div>
+            <h2>${esc(member.name)}</h2>
+            <span class="meta">${esc(member.orgRole || member.role || "Member")}</span>
+          </div>
+        </div>
+        <div class="chips">
+          <span class="chip ${member.status === "alumni" ? "alumni" : "active"}">${esc(labelForStatus(member.status))}</span>
+          <span class="chip">${esc(member.source === "hub" ? "Hub member" : labelForKind(member.kind))}</span>
+          ${member.cohort ? `<span class="chip">${esc(member.cohort)}</span>` : ""}
+          ${isLeader(member) ? `<span class="chip leader">Leadership</span>` : ""}
+        </div>
+        <div class="detail-section">
+          <h3>Bio</h3>
+          <p>${esc(member.bio || "No bio has been added for this member yet.")}</p>
+        </div>
+        <div class="detail-section">
+          <h3>Contact</h3>
+          <div class="contact-list">${contactRows || `<span>No contact details listed.</span>`}</div>
+        </div>
+        ${management}
+      `;
+
+      document.getElementById("editBtn")?.addEventListener("click", () => openProfileDialog(member));
+    }
+
+    function render() {
+      renderStats();
+      renderCohorts();
+      renderDirectory();
+      renderDetail();
+      els.add.disabled = !state.canManage;
+      els.add.title = state.canManage ? "" : (state.leadershipGroupId ? "Only configured leadership can manage the directory." : "Configure a leadership group before managing the directory.");
+    }
+
+    function openProfileDialog(member = null) {
+      els.dialogTitle.textContent = member ? "Edit Directory Profile" : "Add Directory Person";
+      els.form.dataset.uid = member?.uid ?? "";
+      els.form.dataset.source = member?.source ?? "person";
+      els.form.dataset.linkedMemberId = member?.linkedMemberId ?? "";
+      els.form.dataset.personId = member?.personId ?? "";
+      for (const name of ["name", "kind", "status", "orgRole", "cohort", "email", "phone", "photoUrl", "bio"]) {
+        els.form.elements[name].value = member?.[name] ?? (name === "status" ? "active" : "");
+      }
+      els.form.elements.headshotFile.value = "";
+      els.form.elements.name.readOnly = member?.source === "hub";
+      els.form.elements.kind.disabled = member?.source === "hub";
+      renderPhotoPreview(member?.photoUrl ?? "");
+      els.saveNotice.textContent = member?.source === "hub"
+        ? "This saves only directory-specific fields for the selected hub member. Headshots are stored as app files."
+        : "This person is stored inside the Member Directory app, not added to the hub member list.";
+      els.saveBtn.disabled = false;
+      els.dialog.showModal();
+    }
+
+    async function saveProfile() {
+      const data = Object.fromEntries(new FormData(els.form).entries());
+      data.photoUrl = await resolvePhotoUrl(data.photoUrl);
+      const source = els.form.dataset.source || "person";
+      const now = new Date().toISOString();
+
+      if (state.demo) {
+        saveDemoProfile(data, source, now);
+        return;
+      }
+
+      if (source === "hub") {
+        const linkedMemberId = els.form.dataset.linkedMemberId;
+        const profileId = state.profiles.find((p) => p.linked_member_id === linkedMemberId)?.id ?? crypto.randomUUID();
+        await db(
+          `INSERT INTO app_member_directory__member_profiles
+            (id, linked_member_id, visibility, status, org_role, cohort, email, phone, photo_url, bio, updated_by, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT (linked_member_id) DO UPDATE SET
+            status = excluded.status, org_role = excluded.org_role, cohort = excluded.cohort,
+            email = excluded.email, phone = excluded.phone, photo_url = excluded.photo_url,
+            bio = excluded.bio, updated_by = excluded.updated_by, updated_at = excluded.updated_at`,
+          [profileId, linkedMemberId, "everyone", data.status, data.orgRole, data.cohort, data.email, data.phone, data.photoUrl, data.bio, ME?.id ?? "", now, now],
+        );
+        toast("Directory profile saved.");
+      } else {
+        const personId = els.form.dataset.personId || crypto.randomUUID();
+        const existing = state.people.some((p) => p.id === personId);
+        if (existing) {
+          await db(
+            `UPDATE app_member_directory__directory_people
+             SET name = ?, kind = ?, status = ?, org_role = ?, cohort = ?, email = ?, phone = ?, photo_url = ?, bio = ?, updated_at = ?
+             WHERE id = ?`,
+            [data.name, data.kind || "other", data.status, data.orgRole, data.cohort, data.email, data.phone, data.photoUrl, data.bio, now, personId],
+          );
+        } else {
+          await db(
+            `INSERT INTO app_member_directory__directory_people
+              (id, name, kind, visibility, status, org_role, cohort, email, phone, photo_url, bio, created_by, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [personId, data.name, data.kind || "other", "everyone", data.status, data.orgRole, data.cohort, data.email, data.phone, data.photoUrl, data.bio, ME?.id ?? "", now, now],
+          );
+        }
+        state.selectedUid = `person:${personId}`;
+        toast("Directory person saved.");
+      }
+      await loadMembers();
+    }
+
+    async function resolvePhotoUrl(currentUrl) {
+      const file = els.form.elements.headshotFile.files?.[0];
+      if (!file) return currentUrl ?? "";
+      if (!file.type.startsWith("image/")) throw new Error("Headshot must be an image file");
+      if (state.demo || !FILES_URL) return URL.createObjectURL(file);
+      toast("Uploading headshot...");
+      const uploaded = await files.upload(file);
+      return uploaded.url ?? files.url(uploaded.id) ?? "";
+    }
+
+    function renderPhotoPreview(url) {
+      if (url) {
+        els.photoPreview.innerHTML = `<img src="${esc(url)}" alt="" />`;
+      } else {
+        els.photoPreview.textContent = "Photo";
+      }
+    }
+
+    function saveDemoProfile(data, source, now) {
+      if (source === "hub") {
+        const linkedMemberId = els.form.dataset.linkedMemberId;
+        const next = {
+          id: state.profiles.find((p) => p.linked_member_id === linkedMemberId)?.id ?? crypto.randomUUID(),
+          linked_member_id: linkedMemberId,
+          ...data,
+          updated_at: now,
+        };
+        const index = state.profiles.findIndex((profile) => profile.linked_member_id === linkedMemberId);
+        if (index >= 0) state.profiles.splice(index, 1, next);
+        else state.profiles.push(next);
+        state.selectedUid = `hub:${linkedMemberId}`;
+      } else {
+        const id = els.form.dataset.personId || `demo-${crypto.randomUUID()}`;
+        const next = { id, ...data, updated_at: now };
+        const index = state.people.findIndex((person) => person.id === id);
+        if (index >= 0) state.people.splice(index, 1, next);
+        else state.people.unshift(next);
+        state.selectedUid = `person:${id}`;
+      }
+      composeDirectory();
+      render();
+      toast("Profile saved in demo mode.");
+    }
+
+    function labelForStatus(status) {
+      if (status === "alumni") return "Alumni";
+      if (status === "inactive") return "Inactive";
+      return "Active";
+    }
+
+    function labelForKind(kind) {
+      return ({
+        alumni: "Alumni",
+        advisor: "Advisor",
+        partner: "Partner",
+        guest: "Guest",
+        other: "Directory person",
+        member: "Hub member",
+      })[kind] ?? "Directory person";
+    }
+
+    function toast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      window.clearTimeout(toast.timer);
+      toast.timer = window.setTimeout(() => els.toast.classList.remove("show"), 2600);
+    }
+
+    els.search.addEventListener("input", () => {
+      state.query = els.search.value;
+      renderDirectory();
+      renderDetail();
+    });
+    els.status.addEventListener("change", () => {
+      state.status = els.status.value;
+      renderDirectory();
+      renderDetail();
+    });
+    els.cohort.addEventListener("change", () => {
+      state.cohort = els.cohort.value;
+      renderDirectory();
+      renderDetail();
+    });
+    els.refresh.addEventListener("click", () => {
+      toast("Refreshing directory...");
+      loadMembers();
+    });
+    els.add.addEventListener("click", () => {
+      if (!state.canManage) return;
+      openProfileDialog();
+    });
+    els.form.elements.headshotFile.addEventListener("change", () => {
+      const file = els.form.elements.headshotFile.files?.[0];
+      if (!file) {
+        renderPhotoPreview(els.form.elements.photoUrl.value);
+        return;
+      }
+      if (!file.type.startsWith("image/")) {
+        toast("Choose an image file for the headshot.");
+        els.form.elements.headshotFile.value = "";
+        return;
+      }
+      renderPhotoPreview(URL.createObjectURL(file));
+    });
+    els.form.elements.photoUrl.addEventListener("input", () => {
+      if (!els.form.elements.headshotFile.files?.[0]) renderPhotoPreview(els.form.elements.photoUrl.value);
+    });
+    els.closeDialog.addEventListener("click", () => {
+      els.dialog.close();
+    });
+    els.form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      saveProfile().then(() => {
+        els.dialog.close();
+      }).catch((err) => toast(`Could not save profile: ${err.message}`));
+    });
+
+    loadMembers();
+  </script>
+</body>
+</html>

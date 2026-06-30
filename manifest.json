@@ -1,0 +1,59 @@
+{
+  "id": "member-directory",
+  "name": "Member Directory",
+  "version": "1.0.0",
+  "description": "Internal organization roster with profile photos, bios, cohorts, roles, contact details, and member status.",
+  "entrypoint": "index.html",
+  "runtime": "static",
+  "category": "organization",
+  "tags": ["members", "directory", "roster", "profiles", "organization"],
+  "data_access": {
+    "reads": ["family.members", "family.groups"],
+    "writes": []
+  },
+  "permissions": {
+    "default_audience": "everyone",
+    "requires_approval": false
+  },
+  "storage": "db",
+  "db_plaintext_columns": ["kind"],
+  "row_policies": {
+    "md_settings": { "kind": "app_config" },
+    "member_profiles": {
+      "kind": "owner_or_visibility",
+      "member_column": "updated_by",
+      "visibility_column": "visibility",
+      "everyone_values": ["everyone"],
+      "write_privileged_only": true,
+      "bypass_group_setting": { "settings_table": "md_settings", "settings_key": "leadership_group_id" }
+    },
+    "directory_people": {
+      "kind": "owner_or_visibility",
+      "member_column": "created_by",
+      "visibility_column": "visibility",
+      "everyone_values": ["everyone"],
+      "write_privileged_only": true,
+      "bypass_group_setting": { "settings_table": "md_settings", "settings_key": "leadership_group_id" }
+    }
+  },
+  "admin_config": {
+    "settings_table": "md_settings",
+    "keys": ["leadership_group_id"]
+  },
+  "nav": { "label": "Directory" },
+  "widget": {
+    "label": "Directory",
+    "size": "small"
+  },
+  "file_acls": {
+    "write": {
+      "require_group_setting": { "settings_table": "md_settings", "settings_key": "leadership_group_id" }
+    }
+  },
+  "resource_limits": {
+    "max_db_bytes": 5242880,
+    "max_file_bytes": 5242880,
+    "max_files_bytes": 104857600
+  },
+  "icon": "👥"
+}
