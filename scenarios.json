@@ -1,0 +1,36 @@
+{
+  "scenarios": [
+    {
+      "name": "email and phone are masked for child members but visible to adults",
+      "members": { "adult": "adult", "kid": "child" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_member_directory__directory_people (id, name, kind, visibility, email, phone, created_at, updated_at) VALUES (?, ?, 'other', 'everyone', ?, ?, ?, ?)",
+          "params": ["dp1", "Jordan Smith", "jordan@example.com", "555-0100", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"]
+        },
+        {
+          "action": "db",
+          "as": "adult",
+          "sql": "SELECT name, email, phone FROM app_member_directory__directory_people WHERE id = ?",
+          "params": ["dp1"],
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "email": "jordan@example.com" }] }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT name, email, phone FROM app_member_directory__directory_people WHERE id = ?",
+          "params": ["dp1"],
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "email": null, "phone": null }] }
+        },
+        {
+          "action": "db",
+          "as": "adult",
+          "sql": "UPDATE app_member_directory__directory_people SET name = 'tampered' WHERE id = ?",
+          "params": ["dp1"],
+          "expect": { "status": 403 }
+        }
+      ]
+    }
+  ]
+}

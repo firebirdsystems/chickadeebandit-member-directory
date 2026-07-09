@@ -495,6 +495,10 @@
 
   <script type="module">
     import { createFilesHelper } from "/hub-sdk.js";
+    import {
+      esc, isLeader, composeDirectory as composeDirectoryOf, filterMembers,
+      initialsFor, labelForStatus, labelForKind,
+    } from "./logic.js";
 
     const CONTEXT = window.__CONTEXT_URL ?? "";
     const DB = window.__DB_URL ?? "";
@@ -600,65 +604,6 @@
       return json;
     }
 
-    function esc(value) {
-      return String(value ?? "").replace(/[&<>"']/g, (ch) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      })[ch]);
-    }
-
-    function normalizeMember(member) {
-      const profile = member.profile ?? member.directory ?? {};
-      const contact = profile.contact ?? member.contact ?? {};
-      return {
-        ...member,
-        uid: member.uid ?? member.id,
-        name: member.name ?? "Unnamed member",
-        status: (profile.status ?? member.status ?? "active").toLowerCase(),
-        orgRole: profile.orgRole ?? profile.org_role ?? profile.title ?? member.orgRole ?? member.org_role ?? member.title ?? member.role ?? "",
-        cohort: profile.cohort ?? profile.pledgeClass ?? member.cohort ?? member.pledgeClass ?? "",
-        bio: profile.bio ?? member.bio ?? "",
-        photoUrl: profile.photoUrl ?? profile.photo_url ?? profile.avatarUrl ?? member.photoUrl ?? member.photo_url ?? member.avatarUrl ?? "",
-        email: contact.email ?? profile.email ?? member.email ?? "",
-        phone: contact.phone ?? profile.phone ?? member.phone ?? "",
-        kind: profile.kind ?? member.kind ?? "member",
-      };
-    }
-
-    function isLeader(member) {
-      const role = String(member?.role ?? "").toLowerCase();
-      const orgRole = String(member?.orgRole ?? "").toLowerCase();
-      return !!(member?.isAdmin || member?.admin || role === "admin" || role === "leadership" || orgRole.includes("president") || orgRole.includes("chair"));
-    }
-
-    function composeDirectory() {
-      const profileByMemberId = new Map(state.profiles.map((profile) => [profile.linked_member_id, profile]));
-      const hubRows = state.hubMembers.map((member) => {
-        const profile = profileByMemberId.get(member.id) ?? {};
-        return normalizeMember({
-          ...member,
-          ...profile,
-          id: member.id,
-          uid: `hub:${member.id}`,
-          source: "hub",
-          linkedMemberId: member.id,
-          name: member.name,
-          role: member.role,
-          isAdmin: member.isAdmin,
-        });
-      });
-      const appRows = state.people.map((person) => normalizeMember({
-        ...person,
-        uid: `person:${person.id}`,
-        source: "person",
-        personId: person.id,
-      }));
-      state.members = [...hubRows, ...appRows].sort((a, b) => a.name.localeCompare(b.name));
-    }
-
     async function loadMembers() {
       state.demo = !CONTEXT && !DB;
       state.canManage = state.demo;
@@ -727,14 +672,12 @@
       return !!group?.memberIds?.includes(ME.id);
     }
 
+    function composeDirectory() {
+      state.members = composeDirectoryOf(state.hubMembers, state.people, state.profiles);
+    }
+
     function filteredMembers() {
-      const q = state.query.trim().toLowerCase();
-      return state.members.filter((member) => {
-        const statusOk = state.status === "all" || member.status === state.status;
-        const cohortOk = state.cohort === "all" || member.cohort === state.cohort;
-        const haystack = [member.name, member.orgRole, member.role, member.cohort, member.status, member.bio, member.email, member.phone].join(" ").toLowerCase();
-        return statusOk && cohortOk && (!q || haystack.includes(q));
-      });
+      return filterMembers(state.members, { query: state.query, status: state.status, cohort: state.cohort });
     }
 
     function renderStats() {
@@ -756,7 +699,7 @@
       if (member.photoUrl) {
         return `<span class="avatar${large ? " large" : ""}"><img src="${esc(member.photoUrl)}" alt="" loading="lazy" /></span>`;
       }
-      const initials = member.name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "?";
+      const initials = initialsFor(member.name);
       return `<span class="avatar${large ? " large" : ""}" aria-hidden="true">${esc(initials)}</span>`;
     }
 
@@ -963,23 +906,6 @@
       composeDirectory();
       render();
       toast("Profile saved in demo mode.");
-    }
-
-    function labelForStatus(status) {
-      if (status === "alumni") return "Alumni";
-      if (status === "inactive") return "Inactive";
-      return "Active";
-    }
-
-    function labelForKind(kind) {
-      return ({
-        alumni: "Alumni",
-        advisor: "Advisor",
-        partner: "Partner",
-        guest: "Guest",
-        other: "Directory person",
-        member: "Hub member",
-      })[kind] ?? "Directory person";
     }
 
     function toast(message) {
