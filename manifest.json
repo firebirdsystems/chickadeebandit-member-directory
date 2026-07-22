@@ -1,5 +1,6 @@
 {
   "id": "member-directory",
+  "contexts": ["household", "shared_space"],
   "name": "Member Directory",
   "version": "1.1.0",
   "description": "Internal organization roster with profile photos, bios, cohorts, roles, contact details, and member status.",
