@@ -493,10 +493,10 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script type="module">
-    import { createFilesHelper } from "/hub-sdk.js";
+    import { createFilesHelper, searchMatch } from "/hub-sdk.js";
     import {
       esc, isLeader, composeDirectory as composeDirectoryOf, filterMembers,
-      initialsFor, labelForStatus, labelForKind,
+      initialsFor, labelForStatus, labelForKind, searchableFields,
     } from "./logic.js";
 
     const CONTEXT = window.__CONTEXT_URL ?? "";
@@ -676,7 +676,8 @@
     }
 
     function filteredMembers() {
-      return filterMembers(state.members, { query: state.query, status: state.status, cohort: state.cohort });
+      const scoped = filterMembers(state.members, { status: state.status, cohort: state.cohort });
+      return state.query ? scoped.filter((m) => searchMatch(state.query, searchableFields(m))) : scoped;
     }
 
     function renderStats() {

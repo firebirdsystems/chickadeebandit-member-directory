@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   esc, normalizeMember, isLeader, composeDirectory, filterMembers,
-  initialsFor, labelForStatus, labelForKind,
+  initialsFor, labelForStatus, labelForKind, searchableFields,
 } from "../src/logic.js";
 
 describe("esc", () => {
@@ -63,9 +63,17 @@ describe("filterMembers", () => {
     expect(filterMembers(members, { status: "alumni" }).map(m => m.name)).toEqual(["Bob Stone"]);
     expect(filterMembers(members, { cohort: "2020" }).map(m => m.name)).toEqual(["Ada Lovelace"]);
   });
-  it("searches across the haystack", () => {
-    expect(filterMembers(members, { query: "guitar" }).map(m => m.name)).toEqual(["Bob Stone"]);
-    expect(filterMembers(members, { query: "ada@x" }).map(m => m.name)).toEqual(["Ada Lovelace"]);
+});
+
+describe("searchableFields", () => {
+  it("reaches bio, email and org role, not just the name", () => {
+    const fields = searchableFields({
+      name: "Bob Stone", orgRole: "Treasurer", role: "member", cohort: "2021",
+      status: "alumni", bio: "guitarist", email: "bob@x.io", phone: "",
+    });
+    expect(fields).toContain("guitarist");
+    expect(fields).toContain("bob@x.io");
+    expect(fields).toContain("Treasurer");
   });
 });
 

@@ -64,14 +64,23 @@ export function composeDirectory(hubMembers, people, profiles) {
   return [...hubRows, ...appRows].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function filterMembers(members, { query = "", status = "all", cohort = "all" } = {}) {
-  const q = query.trim().toLowerCase();
-  return members.filter((member) => {
-    const statusOk = status === "all" || member.status === status;
-    const cohortOk = cohort === "all" || member.cohort === cohort;
-    const haystack = [member.name, member.orgRole, member.role, member.cohort, member.status, member.bio, member.email, member.phone].join(" ").toLowerCase();
-    return statusOk && cohortOk && (!q || haystack.includes(q));
-  });
+/**
+ * Fields the in-app search matches against (see hub-sdk `searchMatch`). Role,
+ * cohort and bio are all in here, so "2020 treasurer" narrows to one person
+ * instead of matching nobody.
+ */
+export function searchableFields(member) {
+  return [
+    member.name, member.orgRole, member.role, member.cohort,
+    member.status, member.bio, member.email, member.phone,
+  ];
+}
+
+/** Status + cohort filtering. Text search is applied separately by the caller. */
+export function filterMembers(members, { status = "all", cohort = "all" } = {}) {
+  return members.filter((member) =>
+    (status === "all" || member.status === status) &&
+    (cohort === "all" || member.cohort === cohort));
 }
 
 export function initialsFor(name) {
