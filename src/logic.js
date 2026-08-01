@@ -23,6 +23,9 @@ export function normalizeMember(member) {
     cohort: profile.cohort ?? profile.pledgeClass ?? member.cohort ?? member.pledgeClass ?? "",
     bio: profile.bio ?? member.bio ?? "",
     photoUrl: profile.photoUrl ?? profile.photo_url ?? profile.avatarUrl ?? member.photoUrl ?? member.photo_url ?? member.avatarUrl ?? "",
+    // Source of truth for the uploaded headshot's bytes (photo_url is derived
+    // display state). Empty for rows written before migration 002.
+    photoFileId: profile.photoFileId ?? profile.photo_file_id ?? member.photoFileId ?? member.photo_file_id ?? "",
     email: contact.email ?? profile.email ?? member.email ?? "",
     phone: contact.phone ?? profile.phone ?? member.phone ?? "",
     kind: profile.kind ?? member.kind ?? "member",

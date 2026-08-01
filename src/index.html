@@ -477,7 +477,6 @@
             <span class="photo-preview" id="photoPreview">Photo</span>
             <span class="photo-controls">
               <input class="file-field" name="headshotFile" type="file" accept="image/*" />
-              <input class="field" name="photoUrl" type="url" placeholder="Optional image URL fallback" />
             </span>
           </span>
         </label>
@@ -624,8 +623,8 @@
         const [context, settings, profiles, people] = await Promise.all([
           loadHubContext(),
           loadDirectorySettings(),
-          db("SELECT * FROM app_member_directory__member_profiles ORDER BY updated_at DESC"),
-          db("SELECT * FROM app_member_directory__directory_people"),
+          db("SELECT * FROM app_member_directory__member_profiles ORDER BY updated_at DESC LIMIT 1000"),
+          db("SELECT * FROM app_member_directory__directory_people ORDER BY created_at DESC LIMIT 1000"),
         ]);
         state.hubMembers = context.members;
         state.groups = context.groups;
@@ -801,9 +800,13 @@
       els.form.dataset.source = member?.source ?? "person";
       els.form.dataset.linkedMemberId = member?.linkedMemberId ?? "";
       els.form.dataset.personId = member?.personId ?? "";
-      for (const name of ["name", "kind", "status", "orgRole", "cohort", "email", "phone", "photoUrl", "bio"]) {
+      for (const name of ["name", "kind", "status", "orgRole", "cohort", "email", "phone", "bio"]) {
         els.form.elements[name].value = member?.[name] ?? (name === "status" ? "active" : "");
       }
+      // The current headshot rides on the form dataset (there is no URL input
+      // any more — headshots are always our own uploads, by file id).
+      els.form.dataset.photoUrl = member?.photoUrl ?? "";
+      els.form.dataset.photoFileId = member?.photoFileId ?? "";
       els.form.elements.headshotFile.value = "";
       els.form.elements.name.readOnly = member?.source === "hub";
       els.form.elements.kind.disabled = member?.source === "hub";
@@ -817,7 +820,9 @@
 
     async function saveProfile() {
       const data = Object.fromEntries(new FormData(els.form).entries());
-      data.photoUrl = await resolvePhotoUrl(data.photoUrl);
+      const photo = await resolveHeadshot();
+      data.photoUrl = photo.url;
+      data.photoFileId = photo.fileId;
       const source = els.form.dataset.source || "person";
       const now = new Date().toISOString();
 
@@ -831,13 +836,14 @@
         const profileId = state.profiles.find((p) => p.linked_member_id === linkedMemberId)?.id ?? crypto.randomUUID();
         await db(
           `INSERT INTO app_member_directory__member_profiles
-            (id, linked_member_id, visibility, status, org_role, cohort, email, phone, photo_url, bio, updated_by, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, linked_member_id, visibility, status, org_role, cohort, email, phone, photo_url, photo_file_id, bio, updated_by, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT (linked_member_id) DO UPDATE SET
             status = excluded.status, org_role = excluded.org_role, cohort = excluded.cohort,
             email = excluded.email, phone = excluded.phone, photo_url = excluded.photo_url,
+            photo_file_id = excluded.photo_file_id,
             bio = excluded.bio, updated_by = excluded.updated_by, updated_at = excluded.updated_at`,
-          [profileId, linkedMemberId, "everyone", data.status, data.orgRole, data.cohort, data.email, data.phone, data.photoUrl, data.bio, ME?.id ?? "", now, now],
+          [profileId, linkedMemberId, "everyone", data.status, data.orgRole, data.cohort, data.email, data.phone, data.photoUrl, data.photoFileId || null, data.bio, ME?.id ?? "", now, now],
         );
         toast("Directory profile saved.");
       } else {
@@ -846,16 +852,16 @@
         if (existing) {
           await db(
             `UPDATE app_member_directory__directory_people
-             SET name = ?, kind = ?, status = ?, org_role = ?, cohort = ?, email = ?, phone = ?, photo_url = ?, bio = ?, updated_at = ?
+             SET name = ?, kind = ?, status = ?, org_role = ?, cohort = ?, email = ?, phone = ?, photo_url = ?, photo_file_id = ?, bio = ?, updated_at = ?
              WHERE id = ?`,
-            [data.name, data.kind || "other", data.status, data.orgRole, data.cohort, data.email, data.phone, data.photoUrl, data.bio, now, personId],
+            [data.name, data.kind || "other", data.status, data.orgRole, data.cohort, data.email, data.phone, data.photoUrl, data.photoFileId || null, data.bio, now, personId],
           );
         } else {
           await db(
             `INSERT INTO app_member_directory__directory_people
-              (id, name, kind, visibility, status, org_role, cohort, email, phone, photo_url, bio, created_by, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [personId, data.name, data.kind || "other", "everyone", data.status, data.orgRole, data.cohort, data.email, data.phone, data.photoUrl, data.bio, ME?.id ?? "", now, now],
+              (id, name, kind, visibility, status, org_role, cohort, email, phone, photo_url, photo_file_id, bio, created_by, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [personId, data.name, data.kind || "other", "everyone", data.status, data.orgRole, data.cohort, data.email, data.phone, data.photoUrl, data.photoFileId || null, data.bio, ME?.id ?? "", now, now],
           );
         }
         state.selectedUid = `person:${personId}`;
@@ -864,14 +870,34 @@
       await loadMembers();
     }
 
-    async function resolvePhotoUrl(currentUrl) {
+    // Rows written before migration 002 carry only photo_url. When it is one of
+    // our own file URLs the id is recoverable by shape — the lazy backfill for
+    // photo_file_id. (External URLs, which the form no longer offers, yield
+    // null and are simply carried forward as display state.)
+    function ownedFileId(url) {
+      if (!FILES_URL || typeof url !== "string" || !url.startsWith(`${FILES_URL}/`)) return null;
+      const id = url.slice(FILES_URL.length + 1).split(/[?#]/)[0];
+      return /^[A-Za-z0-9_-]+$/.test(id) ? id : null;
+    }
+
+    // Resolves the saved row's headshot: photo_file_id is the source of truth,
+    // photo_url the derived display value. Replacing a headshot used to leave
+    // the previous upload in storage forever, billed and referenced by nothing;
+    // the previous object is deleted once the replacement is safely stored.
+    async function resolveHeadshot() {
+      const currentUrl = els.form.dataset.photoUrl ?? "";
+      const currentFileId = els.form.dataset.photoFileId || ownedFileId(currentUrl) || "";
       const file = els.form.elements.headshotFile.files?.[0];
-      if (!file) return currentUrl ?? "";
+      if (!file) return { url: currentUrl, fileId: currentFileId };
       if (!file.type.startsWith("image/")) throw new Error("Headshot must be an image file");
-      if (state.demo || !FILES_URL) return URL.createObjectURL(file);
+      if (state.demo || !FILES_URL) return { url: URL.createObjectURL(file), fileId: "" };
       toast("Uploading headshot...");
       const uploaded = await files.upload(file);
-      return uploaded.url ?? files.url(uploaded.id) ?? "";
+      const fileId = uploaded.id ?? "";
+      if (currentFileId && currentFileId !== fileId) {
+        await files.delete(currentFileId).catch(() => {});
+      }
+      return { url: uploaded.url ?? files.url(fileId) ?? "", fileId };
     }
 
     function renderPhotoPreview(url) {
@@ -941,7 +967,7 @@
     els.form.elements.headshotFile.addEventListener("change", () => {
       const file = els.form.elements.headshotFile.files?.[0];
       if (!file) {
-        renderPhotoPreview(els.form.elements.photoUrl.value);
+        renderPhotoPreview(els.form.dataset.photoUrl ?? "");
         return;
       }
       if (!file.type.startsWith("image/")) {
@@ -950,9 +976,6 @@
         return;
       }
       renderPhotoPreview(URL.createObjectURL(file));
-    });
-    els.form.elements.photoUrl.addEventListener("input", () => {
-      if (!els.form.elements.headshotFile.files?.[0]) renderPhotoPreview(els.form.elements.photoUrl.value);
     });
     els.closeDialog.addEventListener("click", () => {
       els.dialog.close();

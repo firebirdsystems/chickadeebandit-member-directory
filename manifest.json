@@ -49,6 +49,14 @@
     "settings_table": "md_settings",
     "keys": ["leadership_group_id"]
   },
+  "member_references": {
+    "member_profiles": [
+      { "column": "linked_member_id", "on_removed": "delete", "file_id_column": "photo_file_id" },
+      { "column": "updated_by", "on_removed": "keep" }
+    ],
+    "directory_people": { "column": "created_by", "on_removed": "keep" }
+  },
+  "kiosk": "never",
   "nav": { "label": "Directory" },
   "widget": {
     "label": "Directory",
