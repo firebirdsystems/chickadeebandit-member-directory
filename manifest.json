@@ -1,15 +1,27 @@
 {
   "id": "member-directory",
-  "contexts": ["household", "shared_space"],
+  "contexts": [
+    "household",
+    "shared_space"
+  ],
   "name": "Member Directory",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Internal organization roster with profile photos, bios, cohorts, roles, contact details, and member status.",
   "entrypoint": "index.html",
   "runtime": "static",
   "category": "organization",
-  "tags": ["members", "directory", "roster", "profiles", "organization"],
+  "tags": [
+    "members",
+    "directory",
+    "roster",
+    "profiles",
+    "organization"
+  ],
   "data_access": {
-    "reads": ["family.members", "family.groups"],
+    "reads": [
+      "family.members",
+      "family.groups"
+    ],
     "writes": []
   },
   "permissions": {
@@ -17,54 +29,117 @@
     "requires_approval": false
   },
   "storage": "db",
-  "db_plaintext_columns": ["kind"],
+  "db_plaintext_columns": [
+    "kind"
+  ],
   "row_policies": {
-    "md_settings": { "kind": "app_config" },
+    "md_settings": {
+      "kind": "app_config"
+    },
     "member_profiles": {
       "kind": "owner_or_visibility",
       "member_column": "updated_by",
       "visibility_column": "visibility",
-      "everyone_values": ["everyone"],
+      "everyone_values": [
+        "everyone"
+      ],
       "write_privileged_only": true,
-      "privileged_groups": [{ "settings_table": "md_settings", "settings_key": "leadership_group_id" }],
+      "privileged_groups": [
+        {
+          "settings_table": "md_settings",
+          "settings_key": "leadership_group_id"
+        }
+      ],
       "column_read_acls": {
-        "email": { "visible_to": ["adult", "privileged"] },
-        "phone": { "visible_to": ["adult", "privileged"] }
+        "email": {
+          "visible_to": [
+            "adult",
+            "privileged"
+          ]
+        },
+        "phone": {
+          "visible_to": [
+            "adult",
+            "privileged"
+          ]
+        }
       }
     },
     "directory_people": {
       "kind": "owner_or_visibility",
       "member_column": "created_by",
       "visibility_column": "visibility",
-      "everyone_values": ["everyone"],
+      "everyone_values": [
+        "everyone"
+      ],
       "write_privileged_only": true,
-      "privileged_groups": [{ "settings_table": "md_settings", "settings_key": "leadership_group_id" }],
+      "privileged_groups": [
+        {
+          "settings_table": "md_settings",
+          "settings_key": "leadership_group_id"
+        }
+      ],
       "column_read_acls": {
-        "email": { "visible_to": ["adult", "privileged"] },
-        "phone": { "visible_to": ["adult", "privileged"] }
+        "email": {
+          "visible_to": [
+            "adult",
+            "privileged"
+          ]
+        },
+        "phone": {
+          "visible_to": [
+            "adult",
+            "privileged"
+          ]
+        }
       }
     }
   },
+  "delete_file_columns": {
+    "member_profiles": [
+      "photo_file_id"
+    ],
+    "directory_people": [
+      "photo_file_id"
+    ]
+  },
   "admin_config": {
     "settings_table": "md_settings",
-    "keys": ["leadership_group_id"]
+    "keys": [
+      "leadership_group_id"
+    ]
   },
   "member_references": {
     "member_profiles": [
-      { "column": "linked_member_id", "on_removed": "delete", "file_id_column": "photo_file_id" },
-      { "column": "updated_by", "on_removed": "keep" }
+      {
+        "column": "linked_member_id",
+        "on_removed": "delete",
+        "file_id_column": "photo_file_id"
+      },
+      {
+        "column": "updated_by",
+        "on_removed": "keep"
+      }
     ],
-    "directory_people": { "column": "created_by", "on_removed": "keep" }
+    "directory_people": {
+      "column": "created_by",
+      "on_removed": "keep"
+    }
   },
   "kiosk": "never",
-  "nav": { "label": "Directory" },
+  "nav": {
+    "label": "Directory"
+  },
   "widget": {
     "label": "Directory",
     "size": "small"
   },
   "file_acls": {
     "write": {
-      "require_group_setting": { "settings_table": "md_settings", "settings_key": "leadership_group_id" }
+      "require_group_setting": {
+        "settings_table": "md_settings",
+        "settings_key": "leadership_group_id"
+      }
     }
   },
   "resource_limits": {
@@ -72,5 +147,5 @@
     "max_file_bytes": 5242880,
     "max_files_bytes": 104857600
   },
-  "icon": "👥"
+  "icon": "\ud83d\udc65"
 }
