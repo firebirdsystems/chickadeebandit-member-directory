@@ -29,6 +29,11 @@
     "requires_approval": false
   },
   "storage": "db",
+  "preload": {
+    "member_profiles": {"sql": "SELECT * FROM app_member_directory__member_profiles ORDER BY updated_at DESC LIMIT 1000"},
+    "directory_people": {"sql": "SELECT * FROM app_member_directory__directory_people ORDER BY created_at DESC LIMIT 1000"},
+    "leadership_group": {"sql": "SELECT value FROM app_member_directory__md_settings WHERE key = ? LIMIT 1", "params": ["leadership_group_id"]}
+  },
   "db_plaintext_columns": [
     "kind"
   ],
