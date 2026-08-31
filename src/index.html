@@ -417,7 +417,7 @@
       </div>
       <div class="actions">
         <button class="ghost" id="refreshBtn" type="button">Refresh</button>
-        <button class="primary" id="addBtn" type="button">Add Person</button>
+        <button class="primary" id="addBtn" data-testid="add-person" type="button">Add Person</button>
       </div>
     </section>
 
@@ -716,7 +716,7 @@
         const leaderChip = isLeader(member) ? `<span class="chip leader">Leadership</span>` : "";
         const sourceChip = member.source === "hub" ? "Hub member" : labelForKind(member.kind);
         return `
-          <button class="member-card${active}" type="button" data-uid="${esc(member.uid)}">
+          <button class="member-card${active}" type="button" data-testid="member-card" data-member-uid="${esc(member.uid)}" data-uid="${esc(member.uid)}">
             <span class="card-head">
               ${avatar(member)}
               <span>
@@ -755,11 +755,11 @@
         member.phone ? `<a href="tel:${esc(member.phone)}">${esc(member.phone)}</a>` : "",
       ].filter(Boolean).join("");
       const management = state.canManage
-        ? `<div class="detail-section"><button class="primary" id="editBtn" type="button">Edit Profile</button><div class="notice">Saves update app-owned directory data only. Hub member records are not modified.</div></div>`
+        ? `<div class="detail-section"><button class="primary" id="editBtn" data-testid="edit-profile" type="button">Edit Profile</button><div class="notice">Saves update app-owned directory data only. Hub member records are not modified.</div></div>`
         : "";
 
       els.detail.innerHTML = `
-        <div class="detail-head">
+        <div class="detail-head" data-testid="member-detail" data-member-uid="${esc(member.uid)}">
           ${avatar(member, true)}
           <div>
             <h2>${esc(member.name)}</h2>

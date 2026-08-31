@@ -1,0 +1,118 @@
+{
+  "scenarios": [
+    {
+      "name": "directory management is offered only to the configured leadership group, and Add stays disabled without it",
+      "members": {
+        "viewer": "adult",
+        "other": "adult"
+      },
+      "steps": [
+        {
+          "action": "seedGroup",
+          "group": "social",
+          "name": "Social Committee",
+          "members": [
+            "other"
+          ]
+        },
+        {
+          "action": "seedGroup",
+          "group": "lead",
+          "name": "Leadership",
+          "members": [
+            "viewer"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_member_directory__md_settings (key, value, updated_at) VALUES ('leadership_group_id', ?, datetime('now'))",
+          "params": [
+            "{{group:social}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_member_directory__directory_people (id, name, kind, visibility, status, org_role, cohort, email, phone, bio, created_by, created_at, updated_at) VALUES (?, ?, 'other', 'everyone', 'active', ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))",
+          "params": [
+            "ui-person",
+            "Robin Alumnus",
+            "Past treasurer",
+            "2019",
+            "robin@example.com",
+            "555-0100",
+            "Served two terms on the board.",
+            "{{other}}"
+          ]
+        },
+        {
+          "action": "open",
+          "as": "viewer"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"member-card\"][data-member-uid=\"person:ui-person\"]"
+        },
+        {
+          "action": "expectCount",
+          "as": "viewer",
+          "selector": "[data-testid=\"add-person\"][disabled]",
+          "count": 1
+        },
+        {
+          "action": "click",
+          "as": "viewer",
+          "selector": "[data-testid=\"member-card\"][data-member-uid=\"person:ui-person\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"member-detail\"][data-member-uid=\"person:ui-person\"]"
+        },
+        {
+          "action": "expectCount",
+          "as": "viewer",
+          "selector": "[data-testid=\"edit-profile\"]",
+          "count": 0
+        },
+        {
+          "action": "seedRaw",
+          "sql": "UPDATE app_member_directory__md_settings SET value = ? WHERE key = 'leadership_group_id'",
+          "params": [
+            "{{group:lead}}"
+          ]
+        },
+        {
+          "action": "reload",
+          "as": "viewer"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"member-card\"][data-member-uid=\"person:ui-person\"]"
+        },
+        {
+          "action": "expectCount",
+          "as": "viewer",
+          "selector": "[data-testid=\"add-person\"][disabled]",
+          "count": 0
+        },
+        {
+          "action": "click",
+          "as": "viewer",
+          "selector": "[data-testid=\"member-card\"][data-member-uid=\"person:ui-person\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"member-detail\"][data-member-uid=\"person:ui-person\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"edit-profile\"]"
+        }
+      ]
+    }
+  ]
+}
