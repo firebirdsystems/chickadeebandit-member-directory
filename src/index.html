@@ -8,15 +8,15 @@
     * { box-sizing: border-box; }
     :root {
       color-scheme: light;
-      --bg: #f6f7f4;
-      --panel: #ffffff;
-      --ink: #1b1f23;
-      --muted: #667085;
+      --bg: var(--hub-bg, #f6f7f4);
+      --panel: var(--hub-surface, #ffffff);
+      --ink: var(--hub-text, #1b1f23);
+      --muted: var(--hub-text-muted, #667085);
       --line: #dde2dc;
       --accent: #1f7a68;
       --accent-dark: #155e50;
-      --gold: #b7791f;
-      --blue: #3563a6;
+      --gold: var(--hub-tint-warning-fg, #b7791f);
+      --blue: var(--hub-tint-info-fg, #3563a6);
       --danger: #a64034;
       --shadow: 0 16px 40px rgba(31, 42, 55, 0.08);
     }
@@ -67,12 +67,12 @@
     }
     .primary {
       background: var(--accent);
-      color: #fff;
+      color: var(--hub-primary-fg, #fff);
       padding: 11px 14px;
     }
     .primary:hover { background: var(--accent-dark); }
     .ghost {
-      background: #fff;
+      background: var(--hub-surface, #fff);
       color: var(--ink);
       border: 1px solid var(--line);
       padding: 10px 13px;
@@ -111,7 +111,7 @@
     .field {
       width: 100%;
       border: 1px solid var(--line);
-      background: #fff;
+      background: var(--hub-surface, #fff);
       color: var(--ink);
       border-radius: 8px;
       min-height: 42px;
@@ -159,8 +159,8 @@
       width: 54px;
       height: 54px;
       border-radius: 8px;
-      background: #d7ece5;
-      color: #17473f;
+      background: var(--hub-tint-success, #d7ece5);
+      color: var(--hub-text, #17473f);
       display: grid;
       place-items: center;
       font-weight: 800;
@@ -189,7 +189,7 @@
       margin-top: 4px;
     }
     .bio {
-      color: #384150;
+      color: var(--hub-text, #384150);
       font-size: 0.9rem;
       line-height: 1.38;
       margin: 0;
@@ -207,17 +207,17 @@
     .chip {
       border-radius: 999px;
       border: 1px solid #dbe4df;
-      background: #f8fbf9;
-      color: #3f4b47;
+      background: var(--hub-bg, #f8fbf9);
+      color: var(--hub-text, #3f4b47);
       padding: 5px 8px;
       font-size: 0.76rem;
       font-weight: 700;
       max-width: 100%;
       overflow-wrap: anywhere;
     }
-    .chip.active { color: #116149; background: #e4f5ee; border-color: #bfe4d4; }
-    .chip.alumni { color: var(--blue); background: #edf3ff; border-color: #cbd9f5; }
-    .chip.leader { color: var(--gold); background: #fff6df; border-color: #f0d391; }
+    .chip.active { color: var(--hub-tint-success-fg, #116149); background: var(--hub-tint-success, #e4f5ee); border-color: var(--hub-tint-success-border, #bfe4d4); }
+    .chip.alumni { color: var(--blue); background: var(--hub-tint-info, #edf3ff); border-color: var(--hub-tint-info-border, #cbd9f5); }
+    .chip.leader { color: var(--gold); background: var(--hub-tint-warning, #fff6df); border-color: var(--hub-tint-warning-border, #f0d391); }
     .detail {
       position: sticky;
       top: 16px;
@@ -265,7 +265,7 @@
     .detail-section p {
       margin: 0;
       line-height: 1.45;
-      color: #344054;
+      color: var(--hub-text, #344054);
       overflow-wrap: anywhere;
     }
     .contact-list {
@@ -280,9 +280,9 @@
     }
     .notice {
       margin-top: 12px;
-      border: 1px solid #f0d391;
-      background: #fff9e8;
-      color: #6b4b0b;
+      border: 1px solid var(--hub-tint-warning-border, #f0d391);
+      background: var(--hub-tint-warning, #fff9e8);
+      color: var(--hub-tint-warning-fg, #6b4b0b);
       border-radius: 8px;
       padding: 11px 12px;
       font-size: 0.85rem;
@@ -307,7 +307,7 @@
     dialog::backdrop { background: rgba(15, 23, 42, 0.35); }
     .modal {
       padding: 20px;
-      background: #fff;
+      background: var(--hub-surface, #fff);
     }
     .modal h2 {
       margin: 0 0 12px;
@@ -341,7 +341,7 @@
       height: 82px;
       border-radius: 8px;
       border: 1px solid var(--line);
-      background: #f3f6f4;
+      background: var(--hub-bg, #f3f6f4);
       color: var(--muted);
       display: grid;
       place-items: center;
@@ -363,7 +363,7 @@
       display: block;
       width: 100%;
       border: 1px solid var(--line);
-      background: #fff;
+      background: var(--hub-surface, #fff);
       border-radius: 8px;
       padding: 9px 10px;
       color: var(--ink);
