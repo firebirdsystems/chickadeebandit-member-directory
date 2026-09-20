@@ -1,5 +1,7 @@
 # Member Directory
 
+A [Chickadee Bandit](https://chickadeebandit.com/app-library/member-directory) app.
+
 A Chickadee Bandit organization roster app for browsing member profiles.
 
 The app reads the hub-native `family.members` directory and presents it as an internal org roster with fields for photos, bios, pledge class or cohort, role, contact details, and active or alumni status. Everyone can browse and search the directory.
