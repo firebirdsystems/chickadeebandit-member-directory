@@ -31,6 +31,144 @@
           "expect": { "status": 403 }
         }
       ]
+    },
+    {
+      "name": "in a shared space email and phone are masked for a participant adult but visible to the steward",
+      "context": "shared_space",
+      "members": { "a": "adult", "b": "adult", "steward": "admin" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_member_directory__member_profiles (id, linked_member_id, visibility, email, phone, created_at, updated_at) VALUES (?, ?, 'everyone', ?, ?, ?, ?)",
+          "params": ["mp-b", "{{b}}", "b@example.com", "555-0101", "2026-01-01T00:00:00Z", "2026-01-01T00:00:00Z"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_member_directory__directory_people (id, name, kind, visibility, email, phone, created_at, updated_at) VALUES (?, ?, 'advisor', 'everyone', ?, ?, ?, ?)",
+          "params": [
+            "dp1",
+            "Jordan Smith",
+            "jordan@example.com",
+            "555-0100",
+            "2026-01-01T00:00:00Z",
+            "2026-01-01T00:00:00Z"
+          ]
+        },
+        {
+          "action": "db",
+          "as": "a",
+          "sql": "SELECT id, email, phone FROM app_member_directory__member_profiles WHERE id = ?",
+          "params": ["mp-b"],
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "mp-b", "email": null, "phone": null }] }
+        },
+        {
+          "action": "db",
+          "as": "a",
+          "sql": "SELECT name, email, phone FROM app_member_directory__directory_people WHERE id = ?",
+          "params": ["dp1"],
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [{ "name": "Jordan Smith", "email": null, "phone": null }]
+          }
+        },
+        {
+          "action": "db",
+          "as": "steward",
+          "sql": "SELECT email, phone FROM app_member_directory__member_profiles WHERE id = ?",
+          "params": ["mp-b"],
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "email": "b@example.com", "phone": "555-0101" }] }
+        },
+        {
+          "action": "db",
+          "as": "steward",
+          "sql": "SELECT email, phone FROM app_member_directory__directory_people WHERE id = ?",
+          "params": ["dp1"],
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [{ "email": "jordan@example.com", "phone": "555-0100" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "a leadership-group adult adds and edits directory people; a plain adult outside the group is refused",
+      "members": { "leader": "adult", "member": "adult" },
+      "steps": [
+        { "action": "seedGroup", "group": "leaders", "name": "Leadership", "members": ["leader"] },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_member_directory__md_settings (key, value, updated_at) VALUES ('leadership_group_id', ?, '2026-01-01T00:00:00Z')",
+          "params": ["{{group:leaders}}"]
+        },
+        {
+          "action": "db",
+          "as": "leader",
+          "sql": "INSERT INTO app_member_directory__directory_people (id, name, kind, created_by, created_at, updated_at) VALUES ('p1', 'Dr. Advisor', 'advisor', ?, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')",
+          "params": ["{{leader}}"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "INSERT INTO app_member_directory__directory_people (id, name, kind, created_by, created_at, updated_at) VALUES ('p2', 'Someone', 'other', ?, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')",
+          "params": ["{{member}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "UPDATE app_member_directory__directory_people SET org_role = 'Chair' WHERE id = 'p1'",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "leader",
+          "sql": "UPDATE app_member_directory__directory_people SET org_role = 'Mentor' WHERE id = 'p1'",
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "SELECT id, org_role FROM app_member_directory__directory_people",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "p1", "org_role": "Mentor" }] }
+        }
+      ]
+    },
+    {
+      "name": "in a shared space a leadership-group participant reads email and phone while a participant outside the group sees them masked",
+      "context": "shared_space",
+      "members": { "leader": "adult", "b": "adult", "steward": "admin" },
+      "steps": [
+        { "action": "seedGroup", "group": "leaders", "name": "Leadership", "members": ["leader"] },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_member_directory__md_settings (key, value, updated_at) VALUES ('leadership_group_id', ?, '2026-01-01T00:00:00Z')",
+          "params": ["{{group:leaders}}"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_member_directory__directory_people (id, name, kind, email, phone, created_by, created_at, updated_at) VALUES ('p1', 'Dr. Advisor', 'advisor', 'adv@example.com', '555-0100', ?, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')",
+          "params": ["{{steward}}"]
+        },
+        {
+          "action": "db",
+          "as": "leader",
+          "sql": "SELECT id, email, phone FROM app_member_directory__directory_people",
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [{ "id": "p1", "email": "adv@example.com", "phone": "555-0100" }]
+          }
+        },
+        {
+          "action": "db",
+          "as": "b",
+          "sql": "SELECT id, email, phone FROM app_member_directory__directory_people",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "p1", "email": null, "phone": null }] }
+        }
+      ]
     }
   ]
 }
